@@ -70,7 +70,7 @@ void setup()
   
   Input = sensor0;
   
-  Setpoint = -10; // Default temperature setpoint
+  Setpoint = +4; // Default temperature setpoint °C
  
   myPID.SetMode(AUTOMATIC);
   lcd.createChar(0, delta);
