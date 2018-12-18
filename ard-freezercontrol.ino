@@ -130,7 +130,7 @@ void loop()                                //Procedure loop, run continiusly
     turnOnRelays();                  // Turning on the relays means turnng on the cooling. 
   }
   if (sensor0 < (Setpoint-0.1)){     // Turn on the relays if measured temperature is smaler than (Setpoint-0.1). 0.1 is the hysterese.
-    turnOffRelays();                 // Temperature will vary 0.2 degreees C. This to prevent that the relays are switched too often. 
+    turnOffRelays();                 // Temperature will vary ±0.1ºC. This to prevent that the relays are switched too often. It may be nessesary to increase the hysteresis to unsure avoid problems with the electronics in the freezer.  
   }
 
   if (read_LCD_buttons() == btnUP){
