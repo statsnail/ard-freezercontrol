@@ -1,7 +1,7 @@
-#include <OneWire.h> 
-#include <DallasTemperature.h>
-#include <PID_v1.h>
-#include <LiquidCrystal.h>
+#include <OneWire.h>                // Library for reading voltage from temperature sensor
+#include <DallasTemperature.h>      // Library for converting voltage into temparature
+#include <PID_v1.h>                 // Library for PID regulator
+#include <LiquidCrystal.h>          // Library for controlling LCD display conectet to Arduino microcontroller
 
 // Statsnail Freezer controller v1, requires extra libraries:
 // PID v1.2.0 by Brett
@@ -11,21 +11,21 @@
 // Temperature +- 2 degree Celsius, continue work on PID
 // ard-freezercontrol.ino
 
-#define ONE_WIRE_BUS 2
-#define HOT_WIRE_RELAY 10
-#define NEUTRAL_WIRE_RELAY 11
+#define ONE_WIRE_BUS 2              // Temperature sensor is conected to pin 2
+#define HOT_WIRE_RELAY 10           // Realy is conected to pin 10 and 11
+#define NEUTRAL_WIRE_RELAY 11       // Realy is conected to pin 10 and 11
 
 OneWire oneWire(ONE_WIRE_BUS); 
 DallasTemperature sensors(&oneWire);
 
-LiquidCrystal lcd(8, 9, 4, 5, 6, 7);
+LiquidCrystal lcd(8, 9, 4, 5, 6, 7);   // Setting up pins for LCD disply
 
-double Setpoint, Input, Output;
+double Setpoint, Input, Output;         // Defining double presision float variables for PID
 PID myPID(&Input, &Output, &Setpoint,2,5,1, REVERSE);
 
-float sensor0 = 0.0;
+float sensor0 = 0.0;      // 
 
-int adc_key_in  = 0;
+int adc_key_in  = 0;    // Defining buttons on LCD display
 #define btnRIGHT  0
 #define btnUP     1
 #define btnDOWN   2
@@ -33,7 +33,7 @@ int adc_key_in  = 0;
 #define btnSELECT 4
 #define btnNONE   5
 
-byte delta[8] =
+byte delta[8] =         // Defining a delta for the LCD display
 {
   B00000,
   B00000,
@@ -45,7 +45,7 @@ byte delta[8] =
   B00000
 };
 
-int read_LCD_buttons()
+int read_LCD_buttons()            // Defining buttons on LCD display
 {
  adc_key_in = analogRead(0);
  if (adc_key_in > 1000) return btnNONE;
@@ -57,9 +57,9 @@ int read_LCD_buttons()
  return btnNONE;
 }
 
-void setup()
+void setup()                 // Procdure settup 
 {
-  sensors.begin();
+  sensors.begin();           // start the library
   pinMode(HOT_WIRE_RELAY, OUTPUT);
   pinMode(NEUTRAL_WIRE_RELAY, OUTPUT);
   digitalWrite(HOT_WIRE_RELAY, !LOW);
@@ -68,9 +68,9 @@ void setup()
   sensors.requestTemperatures();
   sensor0 = sensors.getTempCByIndex(0);
   
-  Input = sensor0;
+  Input = sensor0;      // reading temperature into Input variable
   
-  Setpoint = -10; // Default temperature setpoint
+  Setpoint = +4; // Default temperature setpoint (Degrees C)
  
   myPID.SetMode(AUTOMATIC);
   lcd.createChar(0, delta);
@@ -81,17 +81,17 @@ void setup()
   Serial.begin(9600);
 }
 
-void turnOnRelays(){
+void turnOnRelays(){                             // Function to turn on relays
   digitalWrite(HOT_WIRE_RELAY, !HIGH);
   digitalWrite(NEUTRAL_WIRE_RELAY, !HIGH);
 }
 
-void turnOffRelays(){
+void turnOffRelays(){                          // Function to turn off relays
   digitalWrite(HOT_WIRE_RELAY, !LOW);
   digitalWrite(NEUTRAL_WIRE_RELAY, !LOW);
 }
 
-void updateLcd(){
+void updateLcd(){                             // Function for updating LCD display 
  lcd.setCursor(0,0);
  lcd.print("SP:       ");
  lcd.setCursor(9,0);
@@ -106,7 +106,7 @@ void updateLcd(){
  lcd.print(Output);
 }
  
-void loop()
+void loop()                                //Procedure loop, run continiusly
 {
   unsigned long startTime = millis();
   Serial.println("Start of cycle");
@@ -120,10 +120,17 @@ void loop()
   Serial.print("Output: ");
   Serial.println(Output);
 
-  if (Output > 100){
-    turnOnRelays();
-  } else {
-    turnOffRelays();
+  // if (Output > 100){              // PID is still running, but no longer influence the relays
+  //   turnOnRelays();
+  // } else {
+  //   turnOffRelays();
+  // }
+
+  if (sensor0 > (Setpoint+0.1)){     // Turn on the relays if measured temperature is larger than (Setpoint+0.1). 0.1 is the hysterese. 
+    turnOnRelays();                  // Turning on the relays means turnng on the cooling. 
+  }
+  if (sensor0 < (Setpoint-0.1)){     // Turn on the relays if measured temperature is smaler than (Setpoint-0.1). 0.1 is the hysterese.
+    turnOffRelays();                 // Temperature will vary 0.2 degreees C. This to prevent that the relays are switched too often. 
   }
 
   if (read_LCD_buttons() == btnUP){
